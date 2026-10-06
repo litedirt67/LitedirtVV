@@ -110,8 +110,8 @@ local successStart, err = pcall(function()
     
     -- Tombol 1: Panel Ride Storm
     buatTombolScript(
-        "⚡ Ride Storm🔴", 
-        "none"
+        " Ride Storm 🌌", 
+        "https://raw.githubusercontent.com/litedirt67/LitedirtVV/refs/heads/Litedirt-scriptlua/WMWMWMWMWMWMWMWMWMWM.LUA"
     )
 
     -- Tombol 2: Panel Ride a pet (Baru ditambahkan)
