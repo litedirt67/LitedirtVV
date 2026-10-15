@@ -1,5 +1,5 @@
 --[[
-    LITEDIRT UI LIBRARY - Leaderstats Money Tracker Edition
+    LITEDIRT UI LIBRARY - Final Integrated Collapse & HUD Edition
 ]]--
 
 local UserInputService = game:GetService("UserInputService")
@@ -22,7 +22,7 @@ local defaultLighting = {
     GeographicLatitude = Lighting.GeographicLatitude
 }
 
--- Pelacakan Nilai Uang & Income Live (Versi Leaderstats Sebelumnya)
+-- Pelacakan Nilai Uang & Income Live
 local startingMoney = 0
 local sessionIncome = 0
 local targetMoneyValue = nil
@@ -63,11 +63,8 @@ function LiteDirtLib:CreateWindow(titleText)
     local UIStroke = Instance.new("UIStroke")
     local TopBar = Instance.new("Frame")
     local Title = Instance.new("TextLabel")
-    
     local CloseButton = Instance.new("TextButton")
     local CollapseButton = Instance.new("TextButton")
-    
-    -- Label HUD Money & Income yang terintegrasi di TopBar (Sebelah Collapse & [ LITEDIRT ])
     local TopHUDText = Instance.new("TextLabel")
 
     local TabHeader = Instance.new("ScrollingFrame")
@@ -138,7 +135,6 @@ function LiteDirtLib:CreateWindow(titleText)
     CollapseButton.TextColor3 = Color3.fromRGB(200, 200, 200)
     CollapseButton.TextSize = 16.00
 
-    -- Menempatkan teks MONEY & INCOME tepat di sebelah tombol Collapse
     TopHUDText.Name = "TopHUDText"
     TopHUDText.Parent = TopBar
     TopHUDText.BackgroundTransparency = 1.00
@@ -150,7 +146,6 @@ function LiteDirtLib:CreateWindow(titleText)
     TopHUDText.Text = "MONEY: $0 | INCOME: +$0"
     TopHUDText.TextXAlignment = Enum.TextXAlignment.Left
 
-    -- Update teks secara live di TopBar
     task.spawn(function()
         while TopHUDText and TopHUDText.Parent do
             pcall(function()
@@ -437,9 +432,6 @@ Tab1:AddButton("Auto Job", function(state)
     autoJobRunning = state
     
     if autoJobRunning then
-        print("Auto Job: AKTIF (Anti-Fall & Strict Range)")
-        
-        -- Reset baseline pemasukan sesi saat mulai
         pcall(function()
             if targetMoneyValue then
                 startingMoney = targetMoneyValue.Value
@@ -463,7 +455,6 @@ Tab1:AddButton("Auto Job", function(state)
                     for _, pos in ipairs(coords) do
                         if not autoJobRunning then break end
                         
-                        -- Teleport Instant dengan Proteksi Anti-Jatuh
                         pcall(function()
                             if humanoid then humanoid.Sit = false end
                             hrp.Anchored = true
@@ -473,7 +464,6 @@ Tab1:AddButton("Auto Job", function(state)
                             hrp.Anchored = false
                         end)
                         
-                        -- Auto E dengan Filter Jarak Terdekat (Maksimal radius 15 stud dari badan)
                         local startTime = tick()
                         while autoJobRunning and (tick() - startTime < 0.5) do
                             for _, obj in pairs(Workspace:GetDescendants()) do
@@ -492,3 +482,83 @@ Tab1:AddButton("Auto Job", function(state)
                                                         fireproximityprompt(obj)
                                                     end)
                                                 end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                            task.wait(0.02)
+                        end
+                    end
+                end
+                task.wait(0.1)
+            end
+        end)
+    end
+end)
+
+-- TAB MISC
+local Tab2 = Window:AddTab("Misc")
+Tab2:AddLabel("Pilihan Grafik / Graphics")
+
+local function resetGraphicsToDefault()
+    pcall(function()
+        for _, v in pairs(Lighting:GetChildren()) do
+            if v:IsA("PostEffect") or v:IsA("Sky") or v:IsA("Atmosphere") or v:IsA("BloomEffect") or v:IsA("ColorCorrectionEffect") or v:IsA("DepthOfFieldEffect") or v:IsA("SunRaysEffect") or v:IsA("BlurEffect") then
+                v:Destroy()
+            end
+        end
+        Lighting.GlobalShadows = defaultLighting.GlobalShadows
+        Lighting.Ambient = defaultLighting.Ambient
+        Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
+        Lighting.Brightness = defaultLighting.Brightness
+        Lighting.FogEnd = defaultLighting.FogEnd
+        Lighting.ClockTime = defaultLighting.ClockTime
+        Lighting.GeographicLatitude = defaultLighting.GeographicLatitude
+    end)
+end
+
+Tab2:AddButton("Graphics 1", function(state)
+    if state then
+        resetGraphicsToDefault()
+        Lighting.GlobalShadows = true
+        Lighting.Brightness = 1.2
+        Lighting.ClockTime = 6.5
+        Lighting.GeographicLatitude = 45
+        Lighting.Ambient = Color3.fromRGB(150, 180, 210)
+        Lighting.OutdoorAmbient = Color3.fromRGB(120, 160, 200)
+        Lighting.FogEnd = 2500
+        Lighting.FogColor = Color3.fromRGB(160, 190, 220)
+        local atmosphere = Instance.new("Atmosphere", Lighting)
+        atmosphere.Name = "LiteDirtAtmosphere"
+        atmosphere.Density = 0.35
+        atmosphere.Offset = 0.25
+        atmosphere.Color = Color3.fromRGB(170, 200, 230)
+        atmosphere.Decay = Color3.fromRGB(90, 120, 160)
+        atmosphere.Glare = 0.1
+        atmosphere.Haze = 1.5
+        local bloom = Instance.new("BloomEffect", Lighting)
+        bloom.Name = "LiteDirtBloom"
+        bloom.Intensity = 0.2
+        bloom.Size = 32
+        bloom.Threshold = 0.8
+        local colorCorrection = Instance.new("ColorCorrectionEffect", Lighting)
+        colorCorrection.Name = "LiteDirtCC"
+        colorCorrection.Saturation = 0.05
+        colorCorrection.Contrast = 0.15
+        colorCorrection.TintColor = Color3.fromRGB(210, 230, 255)
+    else
+        resetGraphicsToDefault()
+    end
+end)
+
+Tab2:AddButton("Graphics 2", function(state)
+    if state then
+        resetGraphicsToDefault()
+        pcall(function()
+            loadstring(game:HttpGet("https://scriptblox.com/raw/Universal-Script-HD-graphics-206215"))()
+        end)
+    else
+        resetGraphicsToDefault()
+    end
+end)
