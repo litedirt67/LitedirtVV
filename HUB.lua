@@ -1,7 +1,9 @@
+-- ==========================================
+-- LITEDIRT SCRIPT HUB (NEW UI)
+-- ==========================================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- SISTEM PENCARIAN TEMPAT UI AMAN
 local function getSafeGuiParent()
     local success, parent = pcall(function() if gethui then return gethui() end end)
     if success and parent then return parent end
@@ -14,7 +16,6 @@ end
 
 local GuiParent = getSafeGuiParent()
 
--- Hapus UI lama (Anti-Duplicate)
 pcall(function()
     if GuiParent:FindFirstChild("LitedirtHubUI") then GuiParent.LitedirtHubUI:Destroy() end
     if GuiParent:FindFirstChild("DeltaModernUI") then GuiParent.DeltaModernUI:Destroy() end
@@ -23,14 +24,21 @@ end)
 local function applyCorner(gui, radius)
     pcall(function()
         local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, radius or 8)
+        corner.CornerRadius = UDim.new(0, radius or 12)
         corner.Parent = gui
     end)
 end
 
--- ==========================================
--- MEMBUAT TAMPILAN HUB LAUNCHER
--- ==========================================
+local function applyStroke(gui, color, thickness)
+    pcall(function()
+        local stroke = Instance.new("UIStroke")
+        stroke.Color = color or Color3.fromRGB(255, 255, 255)
+        stroke.Thickness = thickness or 1
+        stroke.Transparency = 0.7
+        stroke.Parent = gui
+    end)
+end
+
 local successStart, err = pcall(function()
     local HubGui = Instance.new("ScreenGui")
     HubGui.Name = "LitedirtHubUI"
@@ -39,94 +47,118 @@ local successStart, err = pcall(function()
     HubGui.Parent = GuiParent
 
     local HubFrame = Instance.new("Frame")
-    HubFrame.Size = UDim2.new(0, 320, 0, 240) 
-    HubFrame.Position = UDim2.new(0.5, -160, 0.5, -120)
-    HubFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+    HubFrame.Size = UDim2.new(0, 340, 0, 260) 
+    HubFrame.Position = UDim2.new(0.5, -170, 0.5, -130)
+    HubFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    HubFrame.BackgroundTransparency = 0.25
     HubFrame.Active = true
-    HubFrame.Draggable = false
+    HubFrame.Draggable = true
     HubFrame.Parent = HubGui
-    applyCorner(HubFrame, 12)
+    applyCorner(HubFrame, 16)
+    applyStroke(HubFrame, Color3.fromRGB(200, 200, 200), 1.2)
+
+    local TitleBar = Instance.new("Frame")
+    TitleBar.Size = UDim2.new(1, 0, 0, 50)
+    TitleBar.BackgroundTransparency = 1
+    TitleBar.Parent = HubFrame
 
     local Title = Instance.new("TextLabel")
-    Title.Size = UDim2.new(1, 0, 0, 45)
-    Title.Text = "LITEDIRT | SCRIPT HUB"
-    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Title.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+    Title.Size = UDim2.new(1, -20, 1, 0)
+    Title.Position = UDim2.new(0, 15, 0, 0)
+    Title.Text = "LITEDIRT HUB"
+    Title.TextColor3 = Color3.fromRGB(240, 240, 240)
+    Title.BackgroundTransparency = 1
     Title.Font = Enum.Font.GothamBold
-    Title.TextSize = 13
-    Title.Parent = HubFrame
-    applyCorner(Title, 12)
+    Title.TextSize = 14
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.Parent = TitleBar
 
-    local InfoText = Instance.new("TextLabel")
-    InfoText.Size = UDim2.new(1, -30, 0, 40)
-    InfoText.Position = UDim2.new(0, 15, 0, 50)
-    InfoText.Text = "CHOOSE ANY:"
-    InfoText.TextColor3 = Color3.fromRGB(180, 180, 200)
-    InfoText.BackgroundTransparency = 1
-    InfoText.Font = Enum.Font.Gotham
-    InfoText.TextSize = 12
-    InfoText.TextWrapped = true
-    InfoText.Parent = HubFrame
+    local CloseBtn = Instance.new("TextButton")
+    CloseBtn.Size = UDim2.new(0, 28, 0, 28)
+    CloseBtn.Position = UDim2.new(1, -38, 0, 11)
+    CloseBtn.Text = "×"
+    CloseBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+    CloseBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    CloseBtn.BackgroundTransparency = 0.5
+    CloseBtn.Font = Enum.Font.GothamBold
+    CloseBtn.TextSize = 18
+    CloseBtn.Parent = HubFrame
+    applyCorner(CloseBtn, 8)
+    applyStroke(CloseBtn, Color3.fromRGB(255, 255, 255), 0.5)
+
+    CloseBtn.MouseButton1Click:Connect(function()
+        HubGui:Destroy()
+    end)
+
+    local Divider = Instance.new("Frame")
+    Divider.Size = UDim2.new(1, -30, 0, 1)
+    Divider.Position = UDim2.new(0, 15, 0, 50)
+    Divider.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    Divider.BackgroundTransparency = 0.8
+    Divider.BorderSizePixel = 0
+    Divider.Parent = HubFrame
 
     local ScrollList = Instance.new("ScrollingFrame")
-    ScrollList.Size = UDim2.new(1, -20, 1, -105)
-    ScrollList.Position = UDim2.new(0, 10, 0, 95)
-    ScrollList.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+    ScrollList.Size = UDim2.new(1, -30, 1, -70)
+    ScrollList.Position = UDim2.new(0, 15, 0, 60)
+    ScrollList.BackgroundTransparency = 1
     ScrollList.BorderSizePixel = 0
-    ScrollList.ScrollBarThickness = 4
+    ScrollList.ScrollBarThickness = 3
+    ScrollList.ScrollBarImageColor3 = Color3.fromRGB(200, 200, 200)
     ScrollList.Parent = HubFrame
     
     local ListLayout = Instance.new("UIListLayout")
     ListLayout.Parent = ScrollList
-    ListLayout.Padding = UDim.new(0, 8)
+    ListLayout.Padding = UDim.new(0, 10)
     ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
-    -- FUNGSI UNTUK MEMBUAT TOMBOL SCRIPT
     local function buatTombolScript(nama, urlRawGithub)
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(1, -10, 0, 40)
-        btn.Text = "🚀 " .. nama
-        btn.BackgroundColor3 = Color3.fromRGB(0, 122, 255)
-        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn.Font = Enum.Font.GothamBold
+        btn.Size = UDim2.new(1, 0, 0, 44)
+        btn.Text = "    " .. nama
+        btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        btn.BackgroundTransparency = 0.4
+        btn.TextColor3 = Color3.fromRGB(230, 230, 230)
+        btn.Font = Enum.Font.GothamSemibold
         btn.TextSize = 13
+        btn.TextXAlignment = Enum.TextXAlignment.Left
         btn.Parent = ScrollList
-        applyCorner(btn, 8)
+        applyCorner(btn, 10)
+        applyStroke(btn, Color3.fromRGB(150, 150, 150), 0.8)
+
+        btn.MouseEnter:Connect(function()
+            btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        end)
+        btn.MouseLeave:Connect(function()
+            btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        end)
 
         btn.MouseButton1Down:Connect(function()
-            btn.Text = "CLICK SUB"
-            btn.BackgroundColor3 = Color3.fromRGB(0, 180, 90)
-            task.wait(0.5) 
+            btn.Text = "    Loading..."
+            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            btn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+            task.wait(0.4) 
             pcall(function() HubGui:Destroy() end)
             
-            -- Eksekusi script dari GitHub menggunakan link yang diberikan
             loadstring(game:HttpGet(urlRawGithub))()
         end)
     end
 
-    -- ==========================================
-    -- DAFTAR SCRIPT
-    -- ==========================================
-    
-    -- Tombol 1: Panel Ride Storm
     buatTombolScript(
-        " Ride Storm 🌌", 
+        "Ride Storm 🌌", 
         "https://raw.githubusercontent.com/litedirt67/LitedirtVV/refs/heads/Litedirt-scriptlua/WMWMWMWMWMWMWMWMWMWM.LUA"
     )
 
-    -- Tombol 2: Panel Ride a pet (Baru ditambahkan)
     buatTombolScript(
-        "🐾 Ride a Pet", 
+        "Ride a Pet 🐾", 
         "https://raw.githubusercontent.com/litedirt67/LitedirtVV/refs/heads/Litedirt-scriptlua/Ride_a_pet"
     )
 
-    -- Biar scroll-nya pas sama jumlah tombol
     ListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         ScrollList.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 10)
     end)
 end)
 
 if not successStart then
-    print("Ada kegagalan memuat GUI: ", tostring(err))
+    print("GUI load failed: ", tostring(err))
 end
-
