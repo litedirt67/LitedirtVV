@@ -1,0 +1,367 @@
+-- Cek apakah UI sebelumnya sudah ada
+local existingGui = game.CoreGui:FindFirstChild("LitedirtHubMenu")
+if existingGui then
+    existingGui:Destroy()
+end
+
+-- Membuat ScreenGui utama menggunakan CoreGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "LitedirtHubMenu"
+screenGui.Parent = game.CoreGui
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- ================= NOTIFIKASI BANNER KANAN BAWAH =================
+local notifFrame = Instance.new("Frame")
+notifFrame.Name = "NotificationBanner"
+notifFrame.Parent = screenGui
+notifFrame.BackgroundColor3 = Color3.fromRGB(170, 170, 170)
+notifFrame.BackgroundTransparency = 0.15
+notifFrame.Position = UDim2.new(1, 10, 1, -50)
+notifFrame.Size = UDim2.new(0, 175, 0, 32)
+notifFrame.Visible = false
+
+local notifCorner = Instance.new("UICorner")
+notifCorner.CornerRadius = UDim.new(0, 5)
+notifCorner.Parent = notifFrame
+
+local notifStroke = Instance.new("UIStroke")
+notifStroke.Color = Color3.fromRGB(100, 100, 100)
+notifStroke.Thickness = 1.5
+notifStroke.Parent = notifFrame
+
+local notifText = Instance.new("TextLabel")
+notifText.Parent = notifFrame
+notifText.BackgroundTransparency = 1
+notifText.Position = UDim2.new(0, 8, 0, 0)
+notifText.Size = UDim2.new(0.58, 0, 1, 0)
+notifText.Font = Enum.Font.Code
+notifText.Text = "Join Discord"
+notifText.TextColor3 = Color3.fromRGB(30, 30, 30)
+notifText.TextSize = 9
+notifText.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold)
+notifText.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Tombol Copy Link Kecil
+local copyBtn = Instance.new("TextButton")
+copyBtn.Parent = notifFrame
+copyBtn.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
+copyBtn.BackgroundTransparency = 0.2
+copyBtn.Position = UDim2.new(0.61, 0, 0.15, 0)
+copyBtn.Size = UDim2.new(0, 60, 0, 22)
+copyBtn.Font = Enum.Font.Code
+copyBtn.Text = "copy"
+copyBtn.TextColor3 = Color3.fromRGB(0, 150, 0)
+copyBtn.TextSize = 9
+copyBtn.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold)
+
+local copyCorner = Instance.new("UICorner")
+copyCorner.CornerRadius = UDim.new(0, 4)
+copyCorner.Parent = copyBtn
+
+local copyStroke = Instance.new("UIStroke")
+copyStroke.Color = Color3.fromRGB(100, 100, 100)
+copyStroke.Thickness = 1
+copyStroke.Parent = notifFrame
+
+copyBtn.MouseButton1Click:Connect(function()
+    local inviteLink = "https://discord.gg/G24pewK8b"
+    if setclipboard then
+        setclipboard(inviteLink)
+        copyBtn.Text = "Copied!"
+        task.wait(1.5)
+        copyBtn.Text = "copy"
+    end
+end)
+
+local tweenService = game:GetService("TweenService")
+
+local function showNotification()
+    notifFrame.Visible = true
+    notifFrame.Position = UDim2.new(1, 10, 1, -50)
+    
+    local slideIn = tweenService:Create(notifFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(1, -190, 1, -50)})
+    slideIn:Play()
+    
+    task.spawn(function()
+        task.wait(7)
+        local slideOut = tweenService:Create(notifFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(1, 10, 1, -50)})
+        slideOut:Play()
+        slideOut.Completed:Wait()
+        notifFrame.Visible = false
+    end)
+end
+
+task.spawn(function()
+    while true do
+        task.wait(30)
+        showNotification()
+    end
+end)
+
+-- ================= TOMBOL UTAMA (38x38, HURUF 'L', BISA DI-DRAG DENGAN LANCAR) =================
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Name = "ToggleBtn"
+toggleBtn.Parent = screenGui
+toggleBtn.BackgroundColor3 = Color3.fromRGB(170, 170, 170)
+toggleBtn.BackgroundTransparency = 0.15
+toggleBtn.Position = UDim2.new(0.05, 0, 0.2, 0)
+toggleBtn.Size = UDim2.new(0, 38, 0, 38)
+toggleBtn.Text = ""
+toggleBtn.Draggable = false -- Dimatikan karena kita pakai sistem drag kustom yang lebih stabil
+
+local cornerToggle = Instance.new("UICorner")
+cornerToggle.CornerRadius = UDim.new(0, 6)
+cornerToggle.Parent = toggleBtn
+
+local toggleStroke = Instance.new("UIStroke")
+toggleStroke.Thickness = 2
+toggleStroke.Parent = toggleBtn
+
+local toggleText = Instance.new("TextLabel")
+toggleText.Parent = toggleBtn
+toggleText.BackgroundTransparency = 1
+toggleText.Size = UDim2.new(1, 0, 1, 0)
+toggleText.Font = Enum.Font.Code
+toggleText.Text = "L"
+toggleText.TextColor3 = Color3.fromRGB(30, 30, 30)
+toggleText.TextSize = 16
+toggleText.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold)
+toggleText.TextXAlignment = Enum.TextXAlignment.Center
+toggleText.TextYAlignment = Enum.TextYAlignment.Center
+
+-- ================= PANEL MENU UTAMA =================
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Parent = screenGui
+mainFrame.BackgroundColor3 = Color3.fromRGB(170, 170, 170)
+mainFrame.BackgroundTransparency = 0.15
+mainFrame.Position = UDim2.new(0.12, 0, 0.2, 0)
+mainFrame.Size = UDim2.new(0, 210, 0, 100)
+mainFrame.Visible = false
+mainFrame.Draggable = false
+
+local cornerFrame = Instance.new("UICorner")
+cornerFrame.CornerRadius = UDim.new(0, 4)
+cornerFrame.Parent = mainFrame
+
+local mainStroke = Instance.new("UIStroke")
+mainStroke.Thickness = 2
+mainStroke.Parent = mainFrame
+
+-- Efek Garis Pelangi Bergerak
+game:GetService("RunService").RenderStepped:Connect(function()
+    local hue = (tick() % 5) / 5
+    local rainbowColor = Color3.fromHSV(hue, 1, 1)
+    mainStroke.Color = rainbowColor
+    toggleStroke.Color = rainbowColor
+end)
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Parent = mainFrame
+titleLabel.BackgroundTransparency = 1
+titleLabel.Position = UDim2.new(0, 0, 0, 5)
+titleLabel.Size = UDim2.new(1, 0, 0, 18)
+titleLabel.Font = Enum.Font.Code
+titleLabel.Text = "[ Litedirt ]"
+titleLabel.TextColor3 = Color3.fromRGB(30, 30, 30)
+titleLabel.TextSize = 12
+titleLabel.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold)
+titleLabel.TextXAlignment = Enum.TextXAlignment.Center
+
+local lineSeparator = Instance.new("Frame")
+lineSeparator.Parent = mainFrame
+lineSeparator.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+lineSeparator.BorderSizePixel = 0
+lineSeparator.Position = UDim2.new(0, 8, 0, 25)
+lineSeparator.Size = UDim2.new(1, -16, 0, 1)
+
+-- ================= FITUR: AUTO PUMPKINS =================
+local featureRow1 = Instance.new("Frame")
+featureRow1.Parent = mainFrame
+featureRow1.BackgroundTransparency = 1
+featureRow1.Position = UDim2.new(0, 10, 0, 32)
+featureRow1.Size = UDim2.new(1, -20, 0, 24)
+
+local featureLabel1 = Instance.new("TextLabel")
+featureLabel1.Parent = featureRow1
+featureLabel1.BackgroundTransparency = 1
+featureLabel1.Position = UDim2.new(0, 0, 0, 0)
+featureLabel1.Size = UDim2.new(0.8, 0, 1, 0)
+featureLabel1.Font = Enum.Font.Code
+featureLabel1.Text = "Auto Pumpkins"
+featureLabel1.TextColor3 = Color3.fromRGB(30, 30, 30)
+featureLabel1.TextSize = 10
+featureLabel1.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold)
+featureLabel1.TextXAlignment = Enum.TextXAlignment.Left
+
+local toggleBtn1 = Instance.new("TextButton")
+toggleBtn1.Parent = featureRow1
+toggleBtn1.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
+toggleBtn1.BackgroundTransparency = 0.2
+toggleBtn1.Position = UDim2.new(1, -20, 0.1, 0)
+toggleBtn1.Size = UDim2.new(0, 18, 0, 18)
+toggleBtn1.Font = Enum.Font.Code
+toggleBtn1.Text = ""
+toggleBtn1.TextColor3 = Color3.fromRGB(0, 150, 0)
+toggleBtn1.TextSize = 12
+toggleBtn1.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold)
+
+local cornerBtn1 = Instance.new("UICorner")
+cornerBtn1.CornerRadius = UDim.new(0, 3)
+cornerBtn1.Parent = toggleBtn1
+
+local strokeBtn1 = Instance.new("UIStroke")
+strokeBtn1.Color = Color3.fromRGB(100, 100, 100)
+strokeBtn1.Thickness = 1
+strokeBtn1.Parent = toggleBtn1
+
+-- ================= COPYRIGHT LITEDIRT 2026 =================
+local copyrightLabel = Instance.new("TextLabel")
+copyrightLabel.Parent = mainFrame
+copyrightLabel.BackgroundTransparency = 1
+copyrightLabel.Position = UDim2.new(0, 0, 1, -18)
+copyrightLabel.Size = UDim2.new(1, 0, 0, 14)
+copyrightLabel.Font = Enum.Font.Code
+copyrightLabel.Text = "© Litedirt 2026"
+copyrightLabel.TextColor3 = Color3.fromRGB(80, 80, 80)
+copyrightLabel.TextSize = 9
+copyrightLabel.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold)
+copyrightLabel.TextXAlignment = Enum.TextXAlignment.Center
+
+-- ================= SISTEM DRAG KUSTOM (DIJAMIN LANCAR) =================
+local userInputService = game:GetService("UserInputService")
+local dragging, dragInput, dragStart, startPos
+
+toggleBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = toggleBtn.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+toggleBtn.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+userInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        toggleBtn.Position = UDim2.new(
+            startPos.X.Scale, 
+            startPos.X.Offset + delta.X, 
+            startPos.Y.Scale, 
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+local function toggleMenu()
+    mainFrame.Visible = not mainFrame.Visible
+end
+
+-- Klik tombol 'L' untuk membuka/menutup menu
+toggleBtn.MouseButton1Click:Connect(function()
+    -- Hanya jalankan jika tidak sedang digeser jauh
+    toggleMenu()
+end)
+
+userInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.K then
+        toggleMenu()
+    end
+end)
+
+local isPumpkinRunning = false
+local player = game.Players.LocalPlayer
+local virtualUser = game:GetService("VirtualUser")
+
+player.Idled:Connect(function()
+    if isPumpkinRunning then
+        virtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        task.wait(1)
+        virtualUser:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    end
+end)
+
+-- ================= LOGIKA AUTO PUMPKINS (COOLDOWN 1 MENIT) =================
+toggleBtn1.MouseButton1Click:Connect(function()
+    isPumpkinRunning = not isPumpkinRunning
+    
+    if isPumpkinRunning then
+        toggleBtn1.Text = "✓"
+    else
+        toggleBtn1.Text = ""
+        return
+    end
+
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    local runService = game:GetService("RunService")
+    local folderName = "Halloween2026Pumpkins"
+    local visitedParts = {}
+
+    local function getPumpkinParts()
+        local parts = {}
+        local mainFolder = workspace:FindFirstChild(folderName, true)
+        if mainFolder then
+            for _, obj in ipairs(mainFolder:GetDescendants()) do
+                if obj:IsA("BasePart") then
+                    table.insert(parts, obj)
+                end
+            end
+        end
+        return parts
+    end
+
+    local noclipConnection = runService.Stepped:Connect(function()
+        if not isPumpkinRunning then return end
+        for _, part in ipairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = false end
+        end
+    end)
+
+    while isPumpkinRunning do
+        local partsList = getPumpkinParts()
+        if #partsList == 0 then
+            task.wait(1)
+        else
+            local movedToAny = false
+            for _, targetPart in ipairs(partsList) do
+                if not isPumpkinRunning then break end
+                
+                local lastVisit = visitedParts[targetPart] or 0
+                local timePassed = tick() - lastVisit
+                
+                if targetPart and targetPart.Parent and (timePassed > 60) then
+                    movedToAny = true
+                    visitedParts[targetPart] = tick()
+                    
+                    humanoidRootPart.CFrame = targetPart.CFrame + Vector3.new(0, 3, 0)
+                    task.wait(1)
+                end
+            end
+            
+            if not movedToAny then
+                task.wait(0.5)
+            end
+        end
+        task.wait(0.1)
+    end
+
+    if noclipConnection then noclipConnection:Disconnect() end
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then part.CanCollide = true end
+    end
+    
+    isPumpkinRunning = false
+    toggleBtn1.Text = ""
+end)
