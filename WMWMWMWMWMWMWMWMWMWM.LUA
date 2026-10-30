@@ -1,5 +1,5 @@
 --[[
-    LITEDIRT UI LIBRARY - Final Integrated Collapse & HUD Edition
+    LITEDIRT UI LIBRARY - Final Integrated Collapse & HUD Edition (With Image Icon)
 ]]--
 
 local UserInputService = game:GetService("UserInputService")
@@ -62,6 +62,11 @@ function LiteDirtLib:CreateWindow(titleText)
     local UICorner = Instance.new("UICorner")
     local UIStroke = Instance.new("UIStroke")
     local TopBar = Instance.new("Frame")
+    
+    -- Icon Gambar Baru di TopBar
+    local TopIcon = Instance.new("ImageLabel")
+    local IconCorner = Instance.new("UICorner")
+
     local Title = Instance.new("TextLabel")
     local CloseButton = Instance.new("TextButton")
     local CollapseButton = Instance.new("TextButton")
@@ -96,6 +101,21 @@ function LiteDirtLib:CreateWindow(titleText)
     TopBar.BackgroundTransparency = 1.00
     TopBar.BorderSizePixel = 0
     TopBar.Size = UDim2.new(0, 380, 0, 35)
+
+    -- Konfigurasi Icon Gambar
+    TopIcon.Name = "TopIcon"
+    TopIcon.Parent = TopBar
+    TopIcon.BackgroundTransparency = 1.00
+    TopIcon.Position = UDim2.new(0, 8, 0, 5)
+    TopIcon.Size = UDim2.new(0, 25, 0, 25)
+    TopIcon.Image = "rbxassetid://13837905786" -- Placeholder default / link rbxasset
+    -- Menggunakan rbxassetid atau langsung link kustom via Decal ID jika didukung executor:
+    pcall(function()
+        TopIcon.Image = "https://raw.githubusercontent.com/litedirt67/Image/refs/heads/main/Proyek%20Baru%20%5BB41081A%5D.png"
+    end)
+
+    IconCorner.CornerRadius = UDim.new(0, 6)
+    IconCorner.Parent = TopIcon
 
     Title.Name = "Title"
     Title.Parent = TopBar
@@ -503,11 +523,6 @@ Tab2:AddLabel("Pilihan Grafik / Graphics")
 
 local function resetGraphicsToDefault()
     pcall(function()
-        for _, v in pairs(Lighting:GetChildren()) do
-            if v:IsA("PostEffect") or v:IsA("Sky") or v:IsA("Atmosphere") or v:IsA("BloomEffect") or v:IsA("ColorCorrectionEffect") or v:IsA("DepthOfFieldEffect") or v:IsA("SunRaysEffect") or v:IsA("BlurEffect") then
-                v:Destroy()
-            end
-        end
         Lighting.GlobalShadows = defaultLighting.GlobalShadows
         Lighting.Ambient = defaultLighting.Ambient
         Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
@@ -518,47 +533,8 @@ local function resetGraphicsToDefault()
     end)
 end
 
-Tab2:AddButton("Graphics 1", function(state)
+Tab2:AddButton("Graphics: Default", function(state)
     if state then
-        resetGraphicsToDefault()
-        Lighting.GlobalShadows = true
-        Lighting.Brightness = 1.2
-        Lighting.ClockTime = 6.5
-        Lighting.GeographicLatitude = 45
-        Lighting.Ambient = Color3.fromRGB(150, 180, 210)
-        Lighting.OutdoorAmbient = Color3.fromRGB(120, 160, 200)
-        Lighting.FogEnd = 2500
-        Lighting.FogColor = Color3.fromRGB(160, 190, 220)
-        local atmosphere = Instance.new("Atmosphere", Lighting)
-        atmosphere.Name = "LiteDirtAtmosphere"
-        atmosphere.Density = 0.35
-        atmosphere.Offset = 0.25
-        atmosphere.Color = Color3.fromRGB(170, 200, 230)
-        atmosphere.Decay = Color3.fromRGB(90, 120, 160)
-        atmosphere.Glare = 0.1
-        atmosphere.Haze = 1.5
-        local bloom = Instance.new("BloomEffect", Lighting)
-        bloom.Name = "LiteDirtBloom"
-        bloom.Intensity = 0.2
-        bloom.Size = 32
-        bloom.Threshold = 0.8
-        local colorCorrection = Instance.new("ColorCorrectionEffect", Lighting)
-        colorCorrection.Name = "LiteDirtCC"
-        colorCorrection.Saturation = 0.05
-        colorCorrection.Contrast = 0.15
-        colorCorrection.TintColor = Color3.fromRGB(210, 230, 255)
-    else
-        resetGraphicsToDefault()
-    end
-end)
-
-Tab2:AddButton("Graphics 2", function(state)
-    if state then
-        resetGraphicsToDefault()
-        pcall(function()
-            loadstring(game:HttpGet("https://scriptblox.com/raw/Universal-Script-HD-graphics-206215"))()
-        end)
-    else
         resetGraphicsToDefault()
     end
 end)
