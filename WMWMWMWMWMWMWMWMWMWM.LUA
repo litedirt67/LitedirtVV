@@ -1,540 +1,483 @@
---[[
-    LITEDIRT UI LIBRARY - Final Integrated Collapse & HUD Edition (With Image Icon)
-]]--
-
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local CoreGui = game:GetService("CoreGui")
+-- PurpleLib.lua & LITEDIRT HUB (Final English Version)
 local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local Lighting = game:GetService("Lighting")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
-local LocalPlayer = Players.LocalPlayer
+local player = Players.LocalPlayer
+local Lib = {}
 
--- Simpan status default lighting awal game
-local defaultLighting = {
-    GlobalShadows = Lighting.GlobalShadows,
-    Ambient = Lighting.Ambient,
-    OutdoorAmbient = Lighting.OutdoorAmbient,
-    Brightness = Lighting.Brightness,
-    FogEnd = Lighting.FogEnd,
-    ClockTime = Lighting.ClockTime,
-    GeographicLatitude = Lighting.GeographicLatitude
+----------------------------------------------------------------
+-- THEME & DYNAMIC COLORS (BACKGROUND REMAINS UNTOUCHED)
+----------------------------------------------------------------
+local WHITE = Color3.new(1, 1, 1)
+local TXT = Color3.fromRGB(246, 242, 255)
+local DIM = Color3.fromRGB(190, 170, 230)
+local ACCENT = Color3.fromRGB(150, 85, 255)
+
+local PURPLE_BASE = Color3.fromRGB(175, 115, 255)
+local SHADE = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(150, 110, 200))
+
+local allThemeSurfaces = {}
+local currentGlow, currentBorderGradient
+
+local function new(class, props, parent)
+	local o = Instance.new(class)
+	for k, v in pairs(props) do o[k] = v end
+	if parent then o.Parent = parent end
+	return o
+end
+
+local function corner(parent, r) return new("UICorner", { CornerRadius = UDim.new(0, r or 8) }, parent) end
+local function stroke(parent, color, thickness, transparency)
+	return new("UIStroke", { Color = color or WHITE, Thickness = thickness or 1, Transparency = transparency or 0.8, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, parent)
+end
+
+local function purpleSurface(obj)
+	obj.BackgroundColor3 = PURPLE_BASE
+	local grad = new("UIGradient", { Rotation = 90, Color = SHADE }, obj)
+	table.insert(allThemeSurfaces, obj)
+	return grad
+end
+
+local function gloss(parent, r)
+	local g = new("Frame", {
+		Size = UDim2.new(1, -6, 0.5, -2),
+		Position = UDim2.new(0, 3, 0, 2),
+		BackgroundColor3 = WHITE,
+		BorderSizePixel = 0,
+	}, parent)
+	corner(g, r or 8)
+	new("UIGradient", {
+		Rotation = 90,
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.3),
+			NumberSequenceKeypoint.new(1, 0.95),
+		}),
+	}, g)
+	return g
+end
+
+local function updateThemeColor(newColor)
+	PURPLE_BASE = newColor
+	ACCENT = newColor
+	
+	-- Only buttons, tabs, glows, and borders change. Background stays safe!
+	for _, obj in ipairs(allThemeSurfaces) do
+		if obj and obj.Parent then
+			obj.BackgroundColor3 = newColor
+		end
+	end
+	
+	if currentGlow and currentGlow.Parent then
+		currentGlow.BackgroundColor3 = Color3.new(newColor.R * 0.85, newColor.G * 0.85, newColor.B * 0.85)
+	end
+	
+	if currentBorderGradient and currentBorderGradient.Parent then
+		currentBorderGradient.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.new(math.min(newColor.R * 1.3, 1), math.min(newColor.G * 1.3, 1), math.min(newColor.B * 1.3, 1))),
+			ColorSequenceKeypoint.new(0.5, newColor),
+			ColorSequenceKeypoint.new(1, Color3.new(math.min(newColor.R * 1.3, 1), math.min(newColor.G * 1.3, 1), math.min(newColor.B * 1.3, 1))),
+		})
+	end
+end
+
+----------------------------------------------------------------
+-- WINDOW BUILDER
+----------------------------------------------------------------
+function Lib.Window(titleText)
+	local pg = player:WaitForChild("PlayerGui")
+	local guiName = "PurpleLib_" .. tostring(titleText)
+	local old = pg:FindFirstChild(guiName)
+	if old then old:Destroy() end
+
+	local gui = new("ScreenGui", { Name = guiName, ResetOnSpawn = false, IgnoreGuiInset = true, ZIndexBehavior = Enum.ZIndexBehavior.Sibling }, pg)
+	local BAR_H, SIDE_W, W, H = 36, 104, 420, 310
+	local FULL = UDim2.new(0, W, 0, H)
+
+	local win = new("Frame", {
+		Size = FULL,
+		Position = UDim2.new(0.5, -W / 2, 0.5, -H / 2),
+		BackgroundColor3 = WHITE,
+		BackgroundTransparency = 0.2,
+		BorderSizePixel = 0,
+	}, gui)
+	corner(win, 18)
+	
+	local split = SIDE_W / W
+	new("UIGradient", {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(26, 14, 50)),
+			ColorSequenceKeypoint.new(split, Color3.fromRGB(26, 14, 50)),
+			ColorSequenceKeypoint.new(split + 0.001, Color3.fromRGB(48, 28, 86)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(48, 28, 86)),
+		}),
+	}, win)
+
+	local shine = new("Frame", {
+		Size = UDim2.new(1, 0, 0.5, 0),
+		BackgroundColor3 = WHITE,
+		BorderSizePixel = 0,
+	}, win)
+	corner(shine, 18)
+	new("UIGradient", {
+		Rotation = 90,
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.74),
+			NumberSequenceKeypoint.new(1, 1),
+		}),
+	}, shine)
+
+	local edge = new("Frame", {
+		Size = UDim2.new(1, -36, 0, 1),
+		Position = UDim2.new(0, 18, 0, 2),
+		BackgroundColor3 = WHITE,
+		BorderSizePixel = 0,
+	}, win)
+	new("UIGradient", {
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(0.5, 0.35),
+			NumberSequenceKeypoint.new(1, 1),
+		}),
+	}, edge)
+
+	currentGlow = new("Frame", {
+		Size = UDim2.new(1, 0, 0.45, 0),
+		Position = UDim2.new(0, 0, 0.55, 0),
+		BackgroundColor3 = Color3.fromRGB(150, 80, 255),
+		BorderSizePixel = 0,
+	}, win)
+	corner(currentGlow, 18)
+	new("UIGradient", {
+		Rotation = 90,
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(1, 0.7),
+		}),
+	}, currentGlow)
+
+	local border = stroke(win, WHITE, 2, 0.1)
+	currentBorderGradient = new("UIGradient", {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(215, 165, 255)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(125, 65, 240)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(215, 165, 255)),
+		})
+	}, border)
+	
+	pcall(function()
+		TweenService:Create(currentBorderGradient, TweenInfo.new(6, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1), { Rotation = 360 }):Play()
+		TweenService:Create(border, TweenInfo.new(1.4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Transparency = 0.5 }):Play()
+	end)
+
+	new("Frame", {
+		Size = UDim2.new(0, 1, 1, -24),
+		Position = UDim2.new(0, SIDE_W, 0, 12),
+		BackgroundColor3 = WHITE,
+		BackgroundTransparency = 0.85,
+		BorderSizePixel = 0,
+	}, win)
+
+	local bar = new("Frame", {
+		Size = UDim2.new(1, 0, 0, BAR_H),
+		BackgroundTransparency = 1,
+		Active = true,
+	}, win)
+
+	new("TextLabel", {
+		Size = UDim2.new(0, SIDE_W - 8, 1, 0),
+		Position = UDim2.new(0, 14, 0, 0),
+		BackgroundTransparency = 1,
+		Text = titleText,
+		TextColor3 = TXT,
+		Font = Enum.Font.GothamBold,
+		TextSize = 14,
+		TextTruncate = Enum.TextTruncate.AtEnd,
+		TextXAlignment = Enum.TextXAlignment.Left,
+	}, bar)
+
+	local function circleBtn(xOffset, baseColor, text)
+		local holder = new("Frame", {
+			Size = UDim2.new(0, 24, 0, 24),
+			Position = UDim2.new(1, xOffset, 0.5, -12),
+			BackgroundTransparency = 0.05,
+			BorderSizePixel = 0,
+		}, bar)
+		holder.BackgroundColor3 = baseColor
+		new("UIGradient", { Rotation = 90, Color = SHADE }, holder)
+		corner(holder, 12)
+		stroke(holder, WHITE, 1, 0.5)
+		gloss(holder, 10)
+
+		return new("TextButton", {
+			Size = UDim2.new(1, 0, 1, 0),
+			BackgroundTransparency = 1,
+			Text = text,
+			TextColor3 = WHITE,
+			Font = Enum.Font.GothamBold,
+			TextSize = 13,
+			AutoButtonColor = false,
+			BorderSizePixel = 0,
+		}, holder)
+	end
+
+	local closeBtn = circleBtn(-34, Color3.fromRGB(240, 120, 240), "X")
+	local collapseBtn = circleBtn(-64, Color3.fromRGB(180, 130, 255), "–")
+
+	local body = new("Frame", {
+		Size = UDim2.new(1, 0, 1, -BAR_H),
+		Position = UDim2.new(0, 0, 0, BAR_H),
+		BackgroundTransparency = 1,
+	}, win)
+
+	local sidebar = new("Frame", {
+		Size = UDim2.new(0, SIDE_W, 1, -8),
+		BackgroundTransparency = 1,
+	}, body)
+	new("UIListLayout", { Padding = UDim.new(0, 6) }, sidebar)
+	new("UIPadding", {
+		PaddingLeft = UDim.new(0, 8),
+		PaddingRight = UDim.new(0, 8),
+		PaddingTop = UDim.new(0, 4),
+	}, sidebar)
+
+	local content = new("Frame", {
+		Size = UDim2.new(1, -(SIDE_W + 22), 1, -12),
+		Position = UDim2.new(0, SIDE_W + 14, 0, 2),
+		BackgroundTransparency = 1,
+	}, body)
+
+	local collapsed = false
+	collapseBtn.MouseButton1Click:Connect(function()
+		collapsed = not collapsed
+		body.Visible = not collapsed
+		win.Size = collapsed and UDim2.new(0, W, 0, BAR_H) or FULL
+		collapseBtn.Text = collapsed and "+" or "–"
+	end)
+	closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
+
+	local dragging, dragStart, startPos
+	bar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = win.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+	
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			local d = input.Position - dragStart
+			win.Position = UDim2.new(
+				startPos.X.Scale, startPos.X.Offset + d.X,
+				startPos.Y.Scale, startPos.Y.Offset + d.Y
+			)
+		end
+	end)
+
+	local window = { Gui = gui }
+	local tabs = {}
+
+	local function selectTab(t)
+		for _, other in ipairs(tabs) do
+			local on = (other == t)
+			other.page.Visible = on
+			other.holder.BackgroundTransparency = on and 0.05 or 1
+			other.gloss.Visible = on
+			other.outline.Transparency = on and 0.5 or 1
+			other.btn.TextColor3 = on and WHITE or DIM
+		end
+	end
+
+	function window:AddTab(name)
+		local holder = new("Frame", { Size = UDim2.new(1, 0, 0, 32), BackgroundTransparency = 1, BorderSizePixel = 0 }, sidebar)
+		purpleSurface(holder)
+		corner(holder, 10)
+		local outline = stroke(holder, WHITE, 1, 1)
+		local tabGloss = gloss(holder, 8)
+		tabGloss.Visible = false
+
+		local btn = new("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0, Text = name, TextColor3 = DIM, Font = Enum.Font.GothamMedium, TextSize = 12, AutoButtonColor = false }, holder)
+		local page = new("ScrollingFrame", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Visible = false, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 3, ScrollBarImageColor3 = ACCENT }, content)
+		new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, page)
+		new("UIPadding", { PaddingRight = UDim.new(0, 4) }, page)
+
+		local tab = { btn = btn, holder = holder, gloss = tabGloss, outline = outline, page = page }
+		table.insert(tabs, tab)
+		btn.MouseButton1Click:Connect(function() selectTab(tab) end)
+		if #tabs == 1 then selectTab(tab) end
+
+		function tab:AddSection(text)
+			return new("TextLabel", { Size = UDim2.new(1, 0, 0, 18), BackgroundTransparency = 1, Text = string.upper(text), TextColor3 = Color3.fromRGB(215, 175, 255), Font = Enum.Font.GothamBold, TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left }, page)
+		end
+		function tab:AddLabel(text)
+			return new("TextLabel", { Size = UDim2.new(1, 0, 0, 20), BackgroundTransparency = 1, Text = text, TextColor3 = DIM, Font = Enum.Font.Gotham, TextSize = 12, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left }, page)
+		end
+		function tab:AddButton(text, callback)
+			local holder2 = new("Frame", { Size = UDim2.new(1, 0, 0, 32), BackgroundTransparency = 0.05, BorderSizePixel = 0 }, page)
+			purpleSurface(holder2)
+			corner(holder2, 10)
+			stroke(holder2, WHITE, 1, 0.5)
+			gloss(holder2, 8)
+			local b = new("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0, Text = text, TextColor3 = WHITE, Font = Enum.Font.GothamBold, TextSize = 13, AutoButtonColor = false }, holder2)
+			b.MouseButton1Click:Connect(callback)
+			return b
+		end
+		function tab:AddToggle(text, default, callback)
+			local row = new("Frame", { Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1 }, page)
+			new("TextLabel", { Size = UDim2.new(1, -60, 1, 0), BackgroundTransparency = 1, Text = text, TextColor3 = TXT, Font = Enum.Font.GothamMedium, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left }, row)
+
+			local OFF = Color3.fromRGB(140, 130, 165)
+			local track = new("Frame", { Size = UDim2.new(0, 46, 0, 26), Position = UDim2.new(1, -46, 0.5, -13), BackgroundColor3 = OFF, BackgroundTransparency = 0.4, BorderSizePixel = 0 }, row)
+			corner(track, 13)
+			stroke(track, WHITE, 1, 0.6)
+			local shade = new("UIGradient", { Rotation = 90, Color = SHADE, Enabled = false }, track)
+			gloss(track, 10)
+			local knob = new("Frame", { Size = UDim2.new(0, 22, 0, 22), Position = UDim2.new(0, 2, 0.5, -11), BackgroundColor3 = WHITE, BorderSizePixel = 0 }, track)
+			corner(knob, 11)
+			local hit = new("TextButton", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = "", AutoButtonColor = false }, track)
+
+			local state = default and true or false
+			local function render()
+				shade.Enabled = state
+				track.BackgroundColor3 = state and PURPLE_BASE or OFF
+				track.BackgroundTransparency = state and 0.02 or 0.4
+				knob.Position = state and UDim2.new(1, -24, 0.5, -11) or UDim2.new(0, 2, 0.5, -11)
+			end
+			render()
+			hit.MouseButton1Click:Connect(function()
+				state = not state
+				render()
+				callback(state)
+			end)
+			return { Set = function(v) state = v and true or false render() end }
+		end
+		return tab
+	end
+	return window
+end
+
+----------------------------------------------------------------
+-- CONTENT (LITEDIRT HUB - AUTOFARM MAXSPEED)
+----------------------------------------------------------------
+local win = Lib.Window("LITEDIRT HUB")
+
+-- Pattern Coordinates: 1-1-2-2-3-3-4-4-1
+local P1 = Vector3.new(-1586, 2078, -1820)
+local P2 = Vector3.new(13969, 2112, 7280)
+local P3 = Vector3.new(-1076, 2077, -7919)
+local P4 = Vector3.new(-4282, 2231, 22922)
+
+local coords = {
+	P1, P1,
+	P2, P2,
+	P3, P3,
+	P4, P4,
+	P1
 }
 
--- Pelacakan Nilai Uang & Income Live
-local startingMoney = 0
-local sessionIncome = 0
-local targetMoneyValue = nil
+local function getClosestPrompt()
+	local char = player.Character
+	if not char then return nil end
+	local rootPart = char:FindFirstChild("HumanoidRootPart")
+	if not rootPart then return nil end
+	
+	local closestPrompt = nil
+	local shortestDistance = 35
+	
+	for _, obj in ipairs(workspace:GetDescendants()) do
+		if obj:IsA("ProximityPrompt") then
+			local parentPart = obj.Parent
+			if parentPart and parentPart:IsA("BasePart") then
+				local distance = (parentPart.Position - rootPart.Position).Magnitude
+				if distance < shortestDistance then
+					shortestDistance = distance
+					closestPrompt = obj
+				end
+			end
+		end
+	end
+	return closestPrompt
+end
+
+local function teleportAndSmartInteract(pos)
+	local char = player.Character
+	if not char then return end
+	local rootPart = char:FindFirstChild("HumanoidRootPart")
+	if not rootPart then return end
+	
+	rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+	char:PivotTo(CFrame.new(pos))
+	rootPart.CFrame = CFrame.new(pos)
+	
+	task.wait(0.15)
+	
+	local targetPrompt = getClosestPrompt()
+	if targetPrompt then
+		pcall(function()
+			fireproximityprompt(targetPrompt)
+		end)
+	end
+end
+
+-- AUTOFARM Tab
+local tabInteract = win:AddTab("AUTOFARM")
+tabInteract:AddSection("Autofarm - delivery")
+
+local autoDeliveryActive = false
 
 task.spawn(function()
-    while true do
-        pcall(function()
-            local leaderstats = LocalPlayer:FindFirstChild("leaderstats")
-            if leaderstats then
-                local moneyStat = leaderstats:FindFirstChild("Money") or leaderstats:FindFirstChild("Cash") or leaderstats:FindFirstChild("Coins") or leaderstats:FindFirstChild("$")
-                if moneyStat then
-                    targetMoneyValue = moneyStat
-                    local currentMoney = moneyStat.Value
-                    if startingMoney == 0 and currentMoney > 0 then
-                        startingMoney = currentMoney
-                    end
-                    if startingMoney > 0 then
-                        sessionIncome = currentMoney - startingMoney
-                        if sessionIncome < 0 then sessionIncome = 0 end
-                    end
-                end
-            end
-        end)
-        task.wait(1)
-    end
+	while true do
+		if autoDeliveryActive then
+			for i, pos in ipairs(coords) do
+				if not autoDeliveryActive then break end
+				teleportAndSmartInteract(pos)
+				task.wait(0.2)
+			end
+		end
+		task.wait(0.05)
+	end
 end)
 
-local LiteDirtLib = {}
-
-function LiteDirtLib:CreateWindow(titleText)
-    if CoreGui:FindFirstChild("LiteDirtLibrary") then
-        CoreGui["LiteDirtLibrary"]:Destroy()
-    end
-
-    local LiteDirtLibrary = Instance.new("ScreenGui")
-    local MainFrame = Instance.new("Frame")
-    local UICorner = Instance.new("UICorner")
-    local UIStroke = Instance.new("UIStroke")
-    local TopBar = Instance.new("Frame")
-    
-    -- Icon Gambar Baru di TopBar
-    local TopIcon = Instance.new("ImageLabel")
-    local IconCorner = Instance.new("UICorner")
-
-    local Title = Instance.new("TextLabel")
-    local CloseButton = Instance.new("TextButton")
-    local CollapseButton = Instance.new("TextButton")
-    local TopHUDText = Instance.new("TextLabel")
-
-    local TabHeader = Instance.new("ScrollingFrame")
-    local TabListLayout = Instance.new("UIListLayout")
-    local TabPadding = Instance.new("UIPadding")
-
-    LiteDirtLibrary.Name = "LiteDirtLibrary"
-    LiteDirtLibrary.Parent = CoreGui
-    LiteDirtLibrary.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
-    MainFrame.Name = "MainFrame"
-    MainFrame.Parent = LiteDirtLibrary
-    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    MainFrame.BackgroundTransparency = 0.35
-    MainFrame.BorderSizePixel = 0
-    MainFrame.Position = UDim2.new(0.5, -190, 0.5, -140)
-    MainFrame.Size = UDim2.new(0, 380, 0, 280)
-
-    UICorner.CornerRadius = UDim.new(0, 16)
-    UICorner.Parent = MainFrame
-
-    UIStroke.Parent = MainFrame
-    UIStroke.Color = Color3.fromRGB(255, 255, 255)
-    UIStroke.Transparency = 0.8
-    UIStroke.Thickness = 1
-
-    TopBar.Name = "TopBar"
-    TopBar.Parent = MainFrame
-    TopBar.BackgroundTransparency = 1.00
-    TopBar.BorderSizePixel = 0
-    TopBar.Size = UDim2.new(0, 380, 0, 35)
-
-    -- Konfigurasi Icon Gambar
-    TopIcon.Name = "TopIcon"
-    TopIcon.Parent = TopBar
-    TopIcon.BackgroundTransparency = 1.00
-    TopIcon.Position = UDim2.new(0, 8, 0, 5)
-    TopIcon.Size = UDim2.new(0, 25, 0, 25)
-    TopIcon.Image = "rbxassetid://13837905786" -- Placeholder default / link rbxasset
-    -- Menggunakan rbxassetid atau langsung link kustom via Decal ID jika didukung executor:
-    pcall(function()
-        TopIcon.Image = "https://raw.githubusercontent.com/litedirt67/Image/refs/heads/main/Proyek%20Baru%20%5BB41081A%5D.png"
-    end)
-
-    IconCorner.CornerRadius = UDim.new(0, 6)
-    IconCorner.Parent = TopIcon
-
-    Title.Name = "Title"
-    Title.Parent = TopBar
-    Title.BackgroundTransparency = 1.00
-    Title.Position = UDim2.new(0, 0, 0, 0)
-    Title.Size = UDim2.new(1, 0, 1, 0)
-    Title.Font = Enum.Font.GothamBold
-    Title.Text = titleText or "[ LITEDIRT ]"
-    Title.TextColor3 = Color3.fromRGB(245, 245, 245)
-    Title.TextSize = 14.00
-    Title.TextXAlignment = Enum.TextXAlignment.Center
-
-    CloseButton.Name = "CloseButton"
-    CloseButton.Parent = TopBar
-    CloseButton.BackgroundTransparency = 1.00
-    CloseButton.Position = UDim2.new(0.9, 0, 0.15, 0)
-    CloseButton.Size = UDim2.new(0, 25, 0, 25)
-    CloseButton.Font = Enum.Font.GothamBold
-    CloseButton.Text = "X"
-    CloseButton.TextColor3 = Color3.fromRGB(200, 80, 80)
-    CloseButton.TextSize = 13.00
-
-    CloseButton.MouseButton1Click:Connect(function()
-        LiteDirtLibrary:Destroy()
-    end)
-
-    local activeContainer = nil
-    local isCollapsed = false
-
-    CollapseButton.Name = "CollapseButton"
-    CollapseButton.Parent = TopBar
-    CollapseButton.BackgroundTransparency = 1.00
-    CollapseButton.Position = UDim2.new(0.03, 0, 0.15, 0)
-    CollapseButton.Size = UDim2.new(0, 25, 0, 25)
-    CollapseButton.Font = Enum.Font.GothamBold
-    CollapseButton.Text = "-"
-    CollapseButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-    CollapseButton.TextSize = 16.00
-
-    TopHUDText.Name = "TopHUDText"
-    TopHUDText.Parent = TopBar
-    TopHUDText.BackgroundTransparency = 1.00
-    TopHUDText.Position = UDim2.new(0, 35, 0, 5)
-    TopHUDText.Size = UDim2.new(0, 200, 0, 25)
-    TopHUDText.Font = Enum.Font.GothamBold
-    TopHUDText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    TopHUDText.TextSize = 10.00
-    TopHUDText.Text = "MONEY: $0 | INCOME: +$0"
-    TopHUDText.TextXAlignment = Enum.TextXAlignment.Left
-
-    task.spawn(function()
-        while TopHUDText and TopHUDText.Parent do
-            pcall(function()
-                if targetMoneyValue then
-                    local currentMoney = targetMoneyValue.Value
-                    TopHUDText.Text = string.format("     MONEY: $%d |                                                  | INCOME: +$%d", currentMoney, sessionIncome)
-                end
-            end)
-            task.wait(1)
-        end
-    end)
-
-    CollapseButton.MouseButton1Click:Connect(function()
-        isCollapsed = not isCollapsed
-        TabHeader.Visible = not isCollapsed
-        if activeContainer then
-            activeContainer.Visible = not isCollapsed
-        end
-
-        if isCollapsed then
-            TweenService:Create(MainFrame, TweenInfo.new(0.2), {Size = UDim2.new(0, 380, 0, 35)}):Play()
-            CollapseButton.Text = "+"
-        else
-            TweenService:Create(MainFrame, TweenInfo.new(0.2), {Size = UDim2.new(0, 380, 0, 280)}):Play()
-            CollapseButton.Text = "-"
-        end
-    end)
-
-    TabHeader.Name = "TabHeader"
-    TabHeader.Parent = MainFrame
-    TabHeader.Active = true
-    TabHeader.BackgroundTransparency = 1.00
-    TabHeader.BorderSizePixel = 0
-    TabHeader.Position = UDim2.new(0, 0, 0, 38)
-    TabHeader.Size = UDim2.new(0, 380, 0, 35)
-    TabHeader.CanvasSize = UDim2.new(0, 0, 0, 0)
-    TabHeader.ScrollBarThickness = 0
-    TabHeader.ScrollingDirection = Enum.ScrollingDirection.X
-
-    TabListLayout.Parent = TabHeader
-    TabListLayout.FillDirection = Enum.FillDirection.Horizontal
-    TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    TabListLayout.Padding = UDim.new(0, 8)
-
-    TabPadding.Parent = TabHeader
-    TabPadding.PaddingLeft = UDim.new(0, 15)
-
-    TabListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        TabHeader.CanvasSize = UDim2.new(0, TabListLayout.AbsoluteContentSize.X + 30, 0, 0)
-    end)
-
-    local dragging, dragStart, startPos
-    TopBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = MainFrame.Position
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) and dragging then
-            local delta = input.Position - dragStart
-            MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end)
-
-    local Window = {}
-    local firstTab = true
-
-    function Window:AddTab(tabName)
-        local TabButton = Instance.new("TextButton")
-        local TabCorner = Instance.new("UICorner")
-        local TabStroke = Instance.new("UIStroke")
-
-        local Container = Instance.new("ScrollingFrame")
-        local UIListLayout = Instance.new("UIListLayout")
-        local UIPadding = Instance.new("UIPadding")
-
-        TabButton.Name = "TabButton"
-        TabButton.Parent = TabHeader
-        TabButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        TabButton.BackgroundTransparency = 0.85
-        TabButton.BorderSizePixel = 0
-        TabButton.Size = UDim2.new(0, 95, 0, 28)
-        TabButton.Font = Enum.Font.GothamMedium
-        TabButton.TextColor3 = Color3.fromRGB(220, 220, 220)
-        TabButton.TextSize = 12.00
-        TabButton.Text = tabName
-
-        TabCorner.CornerRadius = UDim.new(0, 8)
-        TabCorner.Parent = TabButton
-
-        TabStroke.Parent = TabButton
-        TabStroke.Color = Color3.fromRGB(255, 255, 255)
-        TabStroke.Transparency = 0.7
-        TabStroke.Thickness = 1
-
-        Container.Name = "Container"
-        Container.Parent = MainFrame
-        Container.Active = true
-        Container.BackgroundTransparency = 1.00
-        Container.BorderSizePixel = 0
-        Container.Position = UDim2.new(0, 0, 0, 80)
-        Container.Size = UDim2.new(0, 380, 0, 190)
-        Container.CanvasSize = UDim2.new(0, 0, 0, 0)
-        Container.ScrollBarThickness = 2
-        Container.Visible = false
-
-        UIListLayout.Parent = Container
-        UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-        UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        UIListLayout.Padding = UDim.new(0, 10)
-
-        UIPadding.Parent = Container
-        UIPadding.PaddingTop = UDim.new(0, 5)
-
-        UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            Container.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 20)
-        end)
-
-        if firstTab then
-            Container.Visible = true
-            activeContainer = Container
-            TabButton.BackgroundTransparency = 0.50
-            TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-            firstTab = false
-        end
-
-        TabButton.MouseButton1Click:Connect(function()
-            if isCollapsed then return end
-            for _, v in pairs(MainFrame:GetChildren()) do
-                if v:IsA("ScrollingFrame") and v.Name == "Container" then
-                    v.Visible = false
-                end
-            end
-            for _, v in pairs(TabHeader:GetChildren()) do
-                if v:IsA("TextButton") then
-                    TweenService:Create(v, TweenInfo.new(0.2), {BackgroundTransparency = 0.85}):Play()
-                    v.TextColor3 = Color3.fromRGB(180, 180, 180)
-                end
-            end
-            Container.Visible = true
-            activeContainer = Container
-            TweenService:Create(TabButton, TweenInfo.new(0.2), {BackgroundTransparency = 0.50}):Play()
-            TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        end)
-
-        local TabFunctions = {}
-
-        function TabFunctions:AddBoard(noticeText, customHeight)
-            local BoardFrame = Instance.new("Frame")
-            local BoardCorner = Instance.new("UICorner")
-            local BoardStroke = Instance.new("UIStroke")
-            local BoardLabel = Instance.new("TextLabel")
-
-            BoardFrame.Name = "NoticeBoard"
-            BoardFrame.Parent = Container
-            BoardFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            BoardFrame.BackgroundTransparency = 0.92
-            BoardFrame.BorderSizePixel = 0
-            BoardFrame.Size = UDim2.new(0, 350, 0, customHeight or 65)
-
-            BoardCorner.CornerRadius = UDim.new(0, 10)
-            BoardCorner.Parent = BoardFrame
-
-            BoardStroke.Parent = BoardFrame
-            BoardStroke.Color = Color3.fromRGB(255, 255, 255)
-            BoardStroke.Transparency = 0.75
-            BoardStroke.Thickness = 1
-
-            BoardLabel.Name = "BoardText"
-            BoardLabel.Parent = BoardFrame
-            BoardLabel.BackgroundTransparency = 1.00
-            BoardLabel.Position = UDim2.new(0.04, 0, 0.05, 0)
-            BoardLabel.Size = UDim2.new(0.92, 0, 0.9, 0)
-            BoardLabel.Font = Enum.Font.GothamMedium
-            BoardLabel.TextColor3 = Color3.fromRGB(210, 210, 210)
-            BoardLabel.TextSize = 11.00
-            BoardLabel.Text = noticeText
-            BoardLabel.TextXAlignment = Enum.TextXAlignment.Left
-            BoardLabel.TextYAlignment = Enum.TextYAlignment.Center
-            BoardLabel.TextWrapped = true
-
-            return BoardLabel
-        end
-
-        function TabFunctions:AddButton(buttonText, callback)
-            local Button = Instance.new("TextButton")
-            Button.Name = buttonText
-            Button.Parent = Container
-            Button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            Button.BackgroundTransparency = 0.90
-            Button.BorderSizePixel = 0
-            Button.Size = UDim2.new(0, 350, 0, 38)
-            Button.Font = Enum.Font.GothamMedium
-            Button.TextColor3 = Color3.fromRGB(220, 220, 220)
-            Button.TextSize = 12.00
-            Button.Text = buttonText or ""
-
-            local ButtonCorner = Instance.new("UICorner", Button)
-            ButtonCorner.CornerRadius = UDim.new(0, 10)
-
-            local ButtonStroke = Instance.new("UIStroke", Button)
-            ButtonStroke.Color = Color3.fromRGB(255, 255, 255)
-            ButtonStroke.Transparency = 0.7
-            ButtonStroke.Thickness = 1
-
-            local toggled = false
-
-            Button.MouseButton1Click:Connect(function()
-                toggled = not toggled
-                
-                if buttonText == "Auto Job" or buttonText:find("Graphics") then
-                    if toggled then
-                        if buttonText:find("Graphics") then
-                            for _, child in pairs(Container:GetChildren()) do
-                                if child:IsA("TextButton") and child.Name:find("Graphics") and child ~= Button then
-                                    child:SetAttribute("ForceOff", true)
-                                end
-                            end
-                        end
-
-                        TweenService:Create(Button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(46, 204, 113), BackgroundTransparency = 0.5}):Play()
-                        Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-                    else
-                        TweenService:Create(Button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.90}):Play()
-                        Button.TextColor3 = Color3.fromRGB(220, 220, 220)
-                    end
-                else
-                    TweenService:Create(Button, TweenInfo.new(0.1), {BackgroundTransparency = 0.75}):Play()
-                    task.wait(0.1)
-                    TweenService:Create(Button, TweenInfo.new(0.1), {BackgroundTransparency = 0.90}):Play()
-                end
-
-                if callback then
-                    pcall(function()
-                        callback(toggled)
-                    end)
-                end
-            end)
-
-            return Button
-        end
-
-        function TabFunctions:AddLabel(labelText)
-            local Label = Instance.new("TextLabel")
-            Label.Name = "Label"
-            Label.Parent = Container
-            Label.BackgroundTransparency = 1.00
-            Label.Size = UDim2.new(0, 350, 0, 20)
-            Label.Font = Enum.Font.GothamMedium
-            Label.TextColor3 = Color3.fromRGB(180, 180, 180)
-            Label.TextSize = 12.00
-            Label.Text = labelText
-            Label.TextXAlignment = Enum.TextXAlignment.Left
-        end
-
-        return TabFunctions
-    end
-
-    return Window
-end
-
--- ========================================================
--- IMPLEMENTASI UTAMA
--- ========================================================
-
-local Window = LiteDirtLib:CreateWindow("[ LITEDIRT ]")
-
--- TAB HOME
-local Tab1 = Window:AddTab("Home")
-Tab1:AddBoard("Tutorial:\n1. Take job | Ambil pekerjaan\n2. Subscribe | Berlangganan\n3. Turn on auto job | Nyalakan auto", 60)
-
-local autoJobRunning = false
-
-Tab1:AddButton("Auto Job", function(state)
-    autoJobRunning = state
-    
-    if autoJobRunning then
-        pcall(function()
-            if targetMoneyValue then
-                startingMoney = targetMoneyValue.Value
-            end
-        end)
-        
-        task.spawn(function()
-            local coords = {
-                {Y = 2078, X = -1587, Z = -1820},
-                {Y = 2111, X = 13968, Z = 7278},
-                {Y = 2076, X = -1074, Z = -7919},
-                {Y = 2231, X = -4278, Z = 22925}
-            }
-            
-            while autoJobRunning do
-                local character = LocalPlayer.Character
-                if character and character:FindFirstChild("HumanoidRootPart") then
-                    local hrp = character.HumanoidRootPart
-                    local humanoid = character:FindFirstChildOfClass("Humanoid")
-                    
-                    for _, pos in ipairs(coords) do
-                        if not autoJobRunning then break end
-                        
-                        pcall(function()
-                            if humanoid then humanoid.Sit = false end
-                            hrp.Anchored = true
-                            hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                            hrp.CFrame = CFrame.new(pos.X, pos.Y + 3, pos.Z)
-                            task.wait(0.15)
-                            hrp.Anchored = false
-                        end)
-                        
-                        local startTime = tick()
-                        while autoJobRunning and (tick() - startTime < 0.5) do
-                            for _, obj in pairs(Workspace:GetDescendants()) do
-                                if obj:IsA("ProximityPrompt") then
-                                    local parentPart = obj.Parent
-                                    if parentPart and parentPart:IsA("BasePart") then
-                                        local distance = (hrp.Position - parentPart.Position).Magnitude
-                                        if distance <= 15 then
-                                            local parentName = parentPart.Name:lower()
-                                            local promptText = (obj.ActionText .. " " .. obj.ObjectText):lower()
-                                            
-                                            if not parentName:find("car") and not parentName:find("vehicle") and not parentName:find("bike") then
-                                                if promptText:find("delivery") or promptText:find("job") or promptText:find("take") then
-                                                    pcall(function()
-                                                        obj.HoldDuration = 0
-                                                        fireproximityprompt(obj)
-                                                    end)
-                                                end
-                                            end
-                                        end
-                                    end
-                                end
-                            end
-                            task.wait(0.02)
-                        end
-                    end
-                end
-                task.wait(0.1)
-            end
-        end)
-    end
+tabInteract:AddToggle("AUTO DELIVERY", false, function(on)
+	autoDeliveryActive = on
 end)
 
--- TAB MISC
-local Tab2 = Window:AddTab("Misc")
-Tab2:AddLabel("Pilihan Grafik / Graphics")
+-- Settings Tab (Theme Customizer)
+local tabSettings = win:AddTab("Settings")
+tabSettings:AddSection("UI Color Customization")
+tabSettings:AddLabel("Select Hub theme color:")
 
-local function resetGraphicsToDefault()
-    pcall(function()
-        Lighting.GlobalShadows = defaultLighting.GlobalShadows
-        Lighting.Ambient = defaultLighting.Ambient
-        Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
-        Lighting.Brightness = defaultLighting.Brightness
-        Lighting.FogEnd = defaultLighting.FogEnd
-        Lighting.ClockTime = defaultLighting.ClockTime
-        Lighting.GeographicLatitude = defaultLighting.GeographicLatitude
-    end)
-end
-
-Tab2:AddButton("Graphics: Default", function(state)
-    if state then
-        resetGraphicsToDefault()
-    end
+tabSettings:AddButton("Classic Purple (Default)", function()
+	updateThemeColor(Color3.fromRGB(175, 115, 255))
 end)
+
+tabSettings:AddButton("Vibrant Red", function()
+	updateThemeColor(Color3.fromRGB(255, 75, 75))
+end)
+
+tabSettings:AddButton("Electric Blue", function()
+	updateThemeColor(Color3.fromRGB(85, 130, 255))
+end)
+
+tabSettings:AddButton("Neon Green", function()
+	updateThemeColor(Color3.fromRGB(85, 255, 120))
+end)
+
+tabSettings:AddButton("Golden Yellow", function()
+	updateThemeColor(Color3.fromRGB(255, 205, 75))
+end)
+
+-- Info Tab (With Owner, Copyright & Discord Link)
+local tabInfo = win:AddTab("Info")
+tabInfo:AddSection("Script Information")
+tabInfo:AddLabel("Script Owner: @litedirt67")
+tabInfo:AddLabel("Copyright (C) 2026 litedirt67. All Rights Reserved. Unauthorized copying, modification, or redistribution is strictly prohibited!")
+tabInfo:AddSection("Discord Community")
+tabInfo:AddLabel("Join our Discord for updates & more scripts:")
+tabInfo:AddLabel("https://discord.gg/uxbwvhV9X")
